@@ -1,0 +1,28 @@
+{
+  "name": "project-morkx-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "node build.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Melvic Gomez",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.804.0",
+    "@aws-sdk/lib-dynamodb": "^3.804.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
+    "openai": "^4.97.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.1",
+    "nodemon": "^3.1.9"
+  }
+}
