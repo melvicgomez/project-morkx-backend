@@ -24,7 +24,12 @@ router.post('/ask-morkx', async (req, res) => {
       ],
     });
 
-    res.json(chatCompletion);
+    res.json({
+      id: chatCompletion.id,
+      choices: chatCompletion.choices,
+      object: chatCompletion.object,
+      created: chatCompletion.created,
+    });
   } catch (error) {
     console.error('OpenAI API error:', error);
     res.status(500).json({ error: 'Something went wrong with OpenAI' });
