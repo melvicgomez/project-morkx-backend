@@ -1,4 +1,4 @@
-name: Build, Push Docker Image to ECR, and Deploy to EC2
+name: Production Deployment
 
 on:
   push:
@@ -42,30 +42,69 @@ jobs:
         run: |
           docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}
 
-      - name: Deploy to EC2
+  deploy-login-ecr:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: Production
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR on EC2
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Install AWS CLI if not already installed
-            if ! command -v aws &> /dev/null; then
-              echo "AWS CLI could not be found, installing..."
-              sudo dnf install aws-cli -y  # For Amazon Linux 2023
-            fi
-
-            # Log in to Amazon ECR on EC2 instance
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
               docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-            # Pull the Docker image from ECR
+  deploy-pull:
+    runs-on: ubuntu-latest
+    needs: deploy-login-ecr
+    environment: Production
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Pull Docker image from ECR on EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
             docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}
 
-            # Stop and remove any running container (optional)
-            docker stop project-morkx-app || true && docker rm project-morkx-app || true
+  deploy-run:
+    runs-on: ubuntu-latest
+    needs: deploy-pull
+    environment: Production
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-            # Run the new Docker container
+      - name: Stop and run container on EC2
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker stop project-morkx-app || true
+            docker rm project-morkx-app || true
             docker run -d --name project-morkx-app -p ${{ secrets.PORT }}:${{ secrets.PORT }} \
               ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ secrets.IMAGE_TAG }}
-
