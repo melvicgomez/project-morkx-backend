@@ -13,8 +13,7 @@ const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: 'morkx.melvicgomez.com',
-    credentials: true,
+    origin: 'https://morkx.melvicgomez.com',
   })
 );
 

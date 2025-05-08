@@ -49,7 +49,7 @@ router.get('/validate-invitation-code', async (req, res) => {
     const now = new Date();
     const expirationDate = new Date(inviteCode.expiration_date);
 
-    if (expirationDate < now) {
+    if (expirationDate.getTime() < now.getTime()) {
       return res.status(400).json({ error: 'Invitation code has expired' });
     }
 
