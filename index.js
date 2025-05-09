@@ -20,7 +20,7 @@ app.use(
 // Rate Limiter
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 5, // Allow 5 requests per minute
+  max: 15, // Allow 5 requests per minute
   message: { message: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,

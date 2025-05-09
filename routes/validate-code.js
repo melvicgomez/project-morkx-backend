@@ -42,7 +42,7 @@ router.get('/validate-invitation-code', async (req, res) => {
       return res.status(400).json({ error: 'Invalid invitation code' });
     }
 
-    if (inviteCode.expiration_date) {
+    if (!inviteCode.expiration_date) {
       res.json(inviteCode);
     }
 
